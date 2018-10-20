@@ -42,7 +42,9 @@ import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
     private static final String TAG = "MainActivity";
@@ -119,12 +121,39 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private void processTextRecognitionResult(FirebaseVisionText texts) {
         List<FirebaseVisionText.TextBlock> blocks = texts.getTextBlocks();
-        if (blocks.size() == 0) {
-            showToast("No text found");
-            return;
-        } else {
-            showToast(texts.getText());
+//        if (blocks.size() == 0) {
+//            showToast("No text found");
+//            return;
+//        } else {
+////            showToast(texts.getText());
+//            showToast();
+//        }
+        mGraphicOverlay.clear();
+        List<FirebaseVisionText.Line> lines = new ArrayList<FirebaseVisionText.Line>();
+        for(FirebaseVisionText.TextBlock block : blocks) {
+            for(FirebaseVisionText.Line line : block.getLines()) {
+                lines.add(line);
+            }
         }
+        FirebaseVisionText.Line[] lineArr =
+                lines.toArray(new FirebaseVisionText.Line[lines.size()]);
+        TextCleaning.TwoLists<FirebaseVisionText.Line> data =
+                TextCleaning.titlesAndDescriptionsFromText(lineArr);
+        for(FirebaseVisionText.Line line : data.first) {
+            Graphic alphaGraphic = new AlphaGraphic(mGraphicOverlay, line, "#9000FF00");
+            mGraphicOverlay.add(alphaGraphic);
+        }
+        for(FirebaseVisionText.Line line : data.second) {
+            Graphic alphaGraphic = new AlphaGraphic(mGraphicOverlay, line, "#90FF0000");
+            mGraphicOverlay.add(alphaGraphic);
+        }
+//        Random r = new Random();
+//        int i = r.nextInt(blocks.size());
+//        List<FirebaseVisionText.Line> lines = blocks.get(i).getLines();
+//        i = r.nextInt(lines.size());
+//        FirebaseVisionText.Line line = lines.get(i);
+//        Graphic alphaGraphic = new AlphaGraphic(mGraphicOverlay, line, "#9000FF00");
+//        mGraphicOverlay.add(alphaGraphic);
 //        mGraphicOverlay.clear();
 //        for (int i = 0; i < blocks.size(); i++) {
 //            List<FirebaseVisionText.Line> lines = blocks.get(i).getLines();
