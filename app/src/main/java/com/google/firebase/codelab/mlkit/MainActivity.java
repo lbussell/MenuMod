@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private static final String TAG = "MainActivity";
     private ImageView mImageView;
     private Button mButton;
-    private Button mCloudButton;
+//    private Button mCloudButton;
     private Bitmap mSelectedImage;
     private GraphicOverlay mGraphicOverlay;
     // Max width (portrait mode)
@@ -64,21 +64,26 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         mImageView = findViewById(R.id.image_view);
 
         mButton = findViewById(R.id.button_text);
-        mCloudButton = findViewById(R.id.button_cloud_text);
+//        mCloudButton = findViewById(R.id.button_cloud_text);
 
         mGraphicOverlay = findViewById(R.id.graphic_overlay);
+
+        // Listens to Text Recognition button
         mButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 runTextRecognition();
             }
         });
-        mCloudButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                runCloudTextRecognition();
-            }
-        });
+
+        // Listens to Cloud Recognition button // Unnecessary, pretty much
+//        mCloudButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                runCloudTextRecognition();
+//            }
+//        });
+
         Spinner dropdown = findViewById(R.id.spinner);
         String[] items = new String[]{"Image 1", "Image 2", "Image 3"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout
@@ -134,30 +139,30 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 //        }
     }
 
-    private void runCloudTextRecognition() {
-        mCloudButton.setEnabled(false);
-        FirebaseVisionImage image = FirebaseVisionImage.fromBitmap(mSelectedImage);
-        FirebaseVisionDocumentTextRecognizer detector = FirebaseVision.getInstance()
-                .getCloudDocumentTextRecognizer();
-        detector.processImage(image)
-                .addOnSuccessListener(
-                        new OnSuccessListener<FirebaseVisionDocumentText>() {
-                            @Override
-                            public void onSuccess(FirebaseVisionDocumentText texts) {
-                                mCloudButton.setEnabled(true);
-                                processCloudTextRecognitionResult(texts);
-                            }
-                        })
-                .addOnFailureListener(
-                        new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                // Task failed with an exception
-                                mCloudButton.setEnabled(true);
-                                e.printStackTrace();
-                            }
-                        });
-    }
+//    private void runCloudTextRecognition() {
+//        mCloudButton.setEnabled(false);
+//        FirebaseVisionImage image = FirebaseVisionImage.fromBitmap(mSelectedImage);
+//        FirebaseVisionDocumentTextRecognizer detector = FirebaseVision.getInstance()
+//                .getCloudDocumentTextRecognizer();
+//        detector.processImage(image)
+//                .addOnSuccessListener(
+//                        new OnSuccessListener<FirebaseVisionDocumentText>() {
+//                            @Override
+//                            public void onSuccess(FirebaseVisionDocumentText texts) {
+//                                mCloudButton.setEnabled(true);
+//                                processCloudTextRecognitionResult(texts);
+//                            }
+//                        })
+//                .addOnFailureListener(
+//                        new OnFailureListener() {
+//                            @Override
+//                            public void onFailure(@NonNull Exception e) {
+//                                // Task failed with an exception
+//                                mCloudButton.setEnabled(true);
+//                                e.printStackTrace();
+//                            }
+//                        });
+//    }
 
     private void processCloudTextRecognitionResult(FirebaseVisionDocumentText text) {
         // Task completed successfully
