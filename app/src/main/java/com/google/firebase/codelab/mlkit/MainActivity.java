@@ -167,10 +167,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private void processTextRecognitionResult(FirebaseVisionText texts) {
         List<FirebaseVisionText.TextBlock> blocks = texts.getTextBlocks();
-        if (blocks.size() == 0) {
-            showToast("No text found");
-            return;
-        }
         mGraphicOverlay.clear();
         List<FirebaseVisionText.Line> lines = new ArrayList<FirebaseVisionText.Line>();
         for(FirebaseVisionText.TextBlock block : blocks) {
@@ -180,14 +176,15 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
         FirebaseVisionText.Line[] lineArr =
                 lines.toArray(new FirebaseVisionText.Line[lines.size()]);
-        TextCleaning.TwoLists<FirebaseVisionText.Line> data =
-                TextCleaning.titlesAndDescriptionsFromText(lineArr);
-        for(FirebaseVisionText.Line line : data.first) {
-            Graphic alphaGraphic = new AlphaGraphic(mGraphicOverlay, line, "#9000FF00");
-            mGraphicOverlay.add(alphaGraphic);
-        }
-        for(FirebaseVisionText.Line line : data.second) {
-            Graphic alphaGraphic = new AlphaGraphic(mGraphicOverlay, line, "#90FF0000");
+        List<MenuItem> items = TextCleaning.itemsFromText(lineArr);
+        showToast(items.size() + "");
+        Random r = new Random();
+        int i = r.nextInt(items.size());
+        MenuItem chosen = items.get(i);
+        Graphic alphaGraphic = new AlphaGraphic(mGraphicOverlay, chosen.title, "#9000FF00");
+        mGraphicOverlay.add(alphaGraphic);
+        for(FirebaseVisionText.Line line : chosen.descriptions) {
+            alphaGraphic = new AlphaGraphic(mGraphicOverlay, line, "#90FF0000");
             mGraphicOverlay.add(alphaGraphic);
         }
     }
