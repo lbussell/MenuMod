@@ -15,11 +15,15 @@
 package com.google.firebase.codelab.mlkit;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Pair;
 import android.view.View;
@@ -48,15 +52,19 @@ import java.util.Random;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
     private static final String TAG = "MainActivity";
+
     private ImageView mImageView;
     private Button mButton;
-//    private Button mCloudButton;
     private Bitmap mSelectedImage;
     private GraphicOverlay mGraphicOverlay;
+    private FloatingActionButton cameraButton;
+
     // Max width (portrait mode)
     private Integer mImageMaxWidth;
     // Max height (portrait mode)
     private Integer mImageMaxHeight;
+
+    static final int REQUEST_IMAGE_CAPTURE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,11 +72,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         setContentView(R.layout.activity_main);
 
         mImageView = findViewById(R.id.image_view);
-
         mButton = findViewById(R.id.button_text);
-//        mCloudButton = findViewById(R.id.button_cloud_text);
-
         mGraphicOverlay = findViewById(R.id.graphic_overlay);
+        cameraButton = findViewById(R.id.floatingActionButton);
 
         // Listens to Text Recognition button
         mButton.setOnClickListener(new View.OnClickListener() {
@@ -78,13 +84,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             }
         });
 
-        // Listens to Cloud Recognition button // Unnecessary, pretty much
-//        mCloudButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                runCloudTextRecognition();
-//            }
-//        });
+        cameraButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dispatchTakePictureIntent();
+            }
+        });
 
         Spinner dropdown = findViewById(R.id.spinner);
         String[] items = new String[]{"Image 1", "Image 2", "Image 3"};
@@ -92,6 +97,47 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 .simple_spinner_dropdown_item, items);
         dropdown.setAdapter(adapter);
         dropdown.setOnItemSelectedListener(this);
+    }
+
+    private void dispatchTakePictureIntent() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            Bundle extras = data.getExtras();
+            // mSelectedImage = rotateBitmap((Bitmap) extras.get("data"),90);
+            mSelectedImage = rotateBitmap((Bitmap) extras.get("data"),90);
+            // mImageView.setImageBitmap(mSelectedImage);
+
+            // Get the dimensions of the View
+            Pair<Integer, Integer> targetedSize = getTargetedWidthHeight();
+
+            int targetWidth = targetedSize.first;
+            int maxHeight = targetedSize.second;
+
+            // Determine how much to scale down the image
+            float scaleFactor =
+                    Math.max(
+                            (float) mSelectedImage.getWidth() / (float) targetWidth,
+                            (float) mSelectedImage.getHeight() / (float) maxHeight);
+
+            Bitmap resizedBitmap =
+                    Bitmap.createScaledBitmap(
+                            mSelectedImage,
+                            (int) (mSelectedImage.getWidth() / scaleFactor),
+                            (int) (mSelectedImage.getHeight() / scaleFactor),
+                            true);
+
+            mImageView.setImageBitmap(resizedBitmap);
+            mSelectedImage = resizedBitmap;
+
+            runTextRecognition();
+        }
     }
 
     private void runTextRecognition() {
@@ -121,13 +167,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private void processTextRecognitionResult(FirebaseVisionText texts) {
         List<FirebaseVisionText.TextBlock> blocks = texts.getTextBlocks();
-//        if (blocks.size() == 0) {
-//            showToast("No text found");
-//            return;
-//        } else {
-////            showToast(texts.getText());
-//            showToast();
-//        }
+        if (blocks.size() == 0) {
+            showToast("No text found");
+            return;
+        }
         mGraphicOverlay.clear();
         List<FirebaseVisionText.Line> lines = new ArrayList<FirebaseVisionText.Line>();
         for(FirebaseVisionText.TextBlock block : blocks) {
@@ -146,71 +189,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         for(FirebaseVisionText.Line line : data.second) {
             Graphic alphaGraphic = new AlphaGraphic(mGraphicOverlay, line, "#90FF0000");
             mGraphicOverlay.add(alphaGraphic);
-        }
-//        Random r = new Random();
-//        int i = r.nextInt(blocks.size());
-//        List<FirebaseVisionText.Line> lines = blocks.get(i).getLines();
-//        i = r.nextInt(lines.size());
-//        FirebaseVisionText.Line line = lines.get(i);
-//        Graphic alphaGraphic = new AlphaGraphic(mGraphicOverlay, line, "#9000FF00");
-//        mGraphicOverlay.add(alphaGraphic);
-//        mGraphicOverlay.clear();
-//        for (int i = 0; i < blocks.size(); i++) {
-//            List<FirebaseVisionText.Line> lines = blocks.get(i).getLines();
-//            for (int j = 0; j < lines.size(); j++) {
-//                List<FirebaseVisionText.Element> elements = lines.get(j).getElements();
-//                for (int k = 0; k < elements.size(); k++) {
-//                    Graphic textGraphic = new TextGraphic(mGraphicOverlay, elements.get(k));
-//                    mGraphicOverlay.add(textGraphic);
-//
-//                }
-//            }
-//        }
-    }
-
-//    private void runCloudTextRecognition() {
-//        mCloudButton.setEnabled(false);
-//        FirebaseVisionImage image = FirebaseVisionImage.fromBitmap(mSelectedImage);
-//        FirebaseVisionDocumentTextRecognizer detector = FirebaseVision.getInstance()
-//                .getCloudDocumentTextRecognizer();
-//        detector.processImage(image)
-//                .addOnSuccessListener(
-//                        new OnSuccessListener<FirebaseVisionDocumentText>() {
-//                            @Override
-//                            public void onSuccess(FirebaseVisionDocumentText texts) {
-//                                mCloudButton.setEnabled(true);
-//                                processCloudTextRecognitionResult(texts);
-//                            }
-//                        })
-//                .addOnFailureListener(
-//                        new OnFailureListener() {
-//                            @Override
-//                            public void onFailure(@NonNull Exception e) {
-//                                // Task failed with an exception
-//                                mCloudButton.setEnabled(true);
-//                                e.printStackTrace();
-//                            }
-//                        });
-//    }
-
-    private void processCloudTextRecognitionResult(FirebaseVisionDocumentText text) {
-        // Task completed successfully
-        if (text == null) {
-            showToast("No text found");
-            return;
-        }
-        mGraphicOverlay.clear();
-        List<FirebaseVisionDocumentText.Block> blocks = text.getBlocks();
-        for (int i = 0; i < blocks.size(); i++) {
-            List<FirebaseVisionDocumentText.Paragraph> paragraphs = blocks.get(i).getParagraphs();
-            for (int j = 0; j < paragraphs.size(); j++) {
-                List<FirebaseVisionDocumentText.Word> words = paragraphs.get(j).getWords();
-                for (int l = 0; l < words.size(); l++) {
-                    CloudTextGraphic cloudDocumentTextGraphic = new CloudTextGraphic(mGraphicOverlay,
-                            words.get(l));
-                    mGraphicOverlay.add(cloudDocumentTextGraphic);
-                }
-            }
         }
     }
 
@@ -258,6 +236,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         targetWidth = maxWidthForPortraitMode;
         targetHeight = maxHeightForPortraitMode;
         return new Pair<>(targetWidth, targetHeight);
+    }
+
+    private Bitmap rotateBitmap(Bitmap source, int angle) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
     }
 
     public void onItemSelected(AdapterView<?> parent, View v, int position, long id) {
