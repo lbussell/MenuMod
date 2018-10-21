@@ -21,7 +21,7 @@ public class DietVector {
                 "parmesan", "ricotta", "mozzarella", "asiago", "pepperjack", "gorgonzola"
         ))),
         NUT("nut", new HashSet<String>(Arrays.asList(
-                "nut", "peanut", "almond", "cashew", "pecan", "pistachio", "chestnut"
+                "nut", "peanut", "almond", "cashew", "pecan", "pistachio", "chestnuts", "chestnut"
         ))),
         SEAFOOD("seafood", new HashSet<String>(Arrays.asList(
                 "fish", "eel", "salmon", "tilapia", "mahi",
@@ -69,6 +69,7 @@ public class DietVector {
     }
 
     public void update(String s) {
+        if(s.isEmpty()) return;
         s = s.toLowerCase();
         for(int i = 0; i < EnumDiet.values().length; ++i) {
             this.dietVec[i] |= EnumDiet.values()[i].keywords.contains(s);

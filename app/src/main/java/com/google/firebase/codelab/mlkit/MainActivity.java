@@ -14,7 +14,9 @@
 
 package com.google.firebase.codelab.mlkit;
 
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
@@ -67,6 +69,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     // Max height (portrait mode)
     private Integer mImageMaxHeight;
 
+    //     0            1         2       3     4
+    // Vegetarian, Pescatarian, Vegan, Gluten, Nut
+    ArrayList<Integer> restrictionsSelected;
+
     static final int REQUEST_IMAGE_CAPTURE = 1;
 
     @Override
@@ -79,14 +85,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         mGraphicOverlay = findViewById(R.id.graphic_overlay);
         cameraButton = findViewById(R.id.floatingActionButton);
 
-        // Listens to Text Recognition button
-//        mButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                runTextRecognition();
-//            }
-//        });
-
         cameraButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -94,12 +92,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             }
         });
 
-//        Spinner dropdown = findViewById(R.id.spinner);
-//        String[] items = new String[]{"Image 1", "Image 2", "Image 3"};
-//        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout
-//                .simple_spinner_dropdown_item, items);
-//        dropdown.setAdapter(adapter);
-//        dropdown.setOnItemSelectedListener(this);
+        selectRestrictionsAlert();
     }
 
     private void dispatchTakePictureIntent() {
@@ -144,6 +137,40 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
     }
 
+    private void selectRestrictionsAlert() {
+        Dialog dialog;
+        final String[] items = {"Vegetarian", "Pescatarian", "Vegan", "Gluten Allergy", "Nut Allergy"};
+        final ArrayList itemsSelected = new ArrayList();
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Select Dietary Restrictions:");
+        builder.setMultiChoiceItems(items, null,
+                new DialogInterface.OnMultiChoiceClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int selectedItemId,
+                                        boolean isSelected) {
+                        if (isSelected) {
+                            itemsSelected.add(selectedItemId);
+                        } else if (itemsSelected.contains(selectedItemId)) {
+                            itemsSelected.remove(Integer.valueOf(selectedItemId));
+                        }
+                    }
+                })
+                .setPositiveButton("Done!", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        restrictionsSelected = itemsSelected;
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        restrictionsSelected = itemsSelected;
+                    }
+                });
+        dialog = builder.create();
+        dialog.show();
+    }
+
     private void alert(String alertText) {
         AlertDialog.Builder builder1  = new AlertDialog.Builder(this);
         builder1.setMessage(alertText);
@@ -179,7 +206,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private void processTextRecognitionResult(FirebaseVisionText texts) {
         List<FirebaseVisionText.TextBlock> blocks = texts.getTextBlocks();
-        String alertText = "";
         if (blocks.size() == 0) {
             showToast("No menu text found");
             return;
@@ -189,40 +215,68 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         for(FirebaseVisionText.TextBlock block : blocks) {
             for(FirebaseVisionText.Line line : block.getLines()) {
                 lines.add(line);
-//                alertText = line.getText() + "\n" + alertText;
             }
         }
         FirebaseVisionText.Line[] lineArr =
                 lines.toArray(new FirebaseVisionText.Line[lines.size()]);
         List<MenuItem> items = TextCleaning.itemsFromText(lineArr);
+
         for(MenuItem chosen : items) {
-            Graphic alphaGraphic = new AlphaGraphic(mGraphicOverlay, chosen.title, "#9000FF00");
-            mGraphicOverlay.add(alphaGraphic);
-            alertText = alertText + "\n" + chosen.title.getText();
+            DietVector dv = new DietVector(chosen);
+            boolean flag = true;
+            outer: for (int num : restrictionsSelected) {
+                switch(num) {
+                    case 0:
+                        if (!dv.isVegetarian()) {
+                            flag = false;
+                            break outer;
+                        }
+                        break;
+                    case 1:
+                        if (!dv.isPescatarian()) {
+                            flag = false;
+                            break outer;
+                        }
+                        break;
+                    case 2:
+                        if (!dv.isVegan()) {
+                            flag = false;
+                            break outer;
+                        }
+                        break;
+                    case 3:
+                        if (dv.hasGluten()) {
+                            flag = false;
+                            break outer;
+                        }
+                        break;
+                    case 4:
+                        if (dv.hasNuts()) {
+                            flag = false;
+                            break outer;
+                        }
+                        break;
+                }
+            }
 
-            if (new DietVector(chosen).hasNuts()) {
-                alertText = alertText + "\n" + "    May contain nuts.";
-            }
-            if (new DietVector(chosen).hasGluten()) {
-                alertText = alertText + "\n" + "    May contain gluten.";
-            }
-            if (new DietVector(chosen).isPescatarian()) {
-                alertText = alertText + "\n" + "    May be pescatarian-friendly.";
-            }
-            if (new DietVector(chosen).isVegetarian()) {
-                alertText = alertText + "\n" + "    May be vegetarian-friendly.";
-            }
-            if (new DietVector(chosen).isVegan()) {
-                alertText = alertText + "\n" + "    May be vegan-friendly.";
-            }
-
-            for(FirebaseVisionText.Line line : chosen.descriptions) {
-                alphaGraphic = new AlphaGraphic(mGraphicOverlay, line, "#90FF0000");
+            if (flag) {
+                Graphic alphaGraphic = new AlphaGraphic(mGraphicOverlay, chosen.title, "#A000FF00");
                 mGraphicOverlay.add(alphaGraphic);
+
+                for(FirebaseVisionText.Line line : chosen.descriptions) {
+                    alphaGraphic = new AlphaGraphic(mGraphicOverlay, line, "#A000FF00");
+                    mGraphicOverlay.add(alphaGraphic);
+                }
+            } else {
+                Graphic alphaGraphic = new AlphaGraphic(mGraphicOverlay, chosen.title, "#A0FF0000");
+                mGraphicOverlay.add(alphaGraphic);
+
+                for(FirebaseVisionText.Line line : chosen.descriptions) {
+                    alphaGraphic = new AlphaGraphic(mGraphicOverlay, line, "#A0FF0000");
+                    mGraphicOverlay.add(alphaGraphic);
+                }
             }
         }
-
-        alert(alertText);
 //        List<MenuItem> items = TextCleaning.itemsFromText(lineArr);
 //        showToast(items.size() + "");
 //        Random r = new Random();
