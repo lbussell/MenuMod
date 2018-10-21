@@ -171,7 +171,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private void processTextRecognitionResult(FirebaseVisionText texts) {
         List<FirebaseVisionText.TextBlock> blocks = texts.getTextBlocks();
         if (blocks.size() == 0) {
-            showToast("No text found");
+            showToast("No menu text found");
             return;
         }
         mGraphicOverlay.clear();
