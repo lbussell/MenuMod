@@ -24,6 +24,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Pair;
 import android.view.View;
@@ -140,7 +141,16 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             defaultText.setText("");
 
             runTextRecognition();
+            alert();
         }
+    }
+
+    private void alert() {
+        AlertDialog.Builder builder1  = new AlertDialog.Builder(this);
+        builder1.setMessage("What's up fuckers");
+
+        AlertDialog alert = builder1.create();
+        alert.show();
     }
 
     private void runTextRecognition() {
