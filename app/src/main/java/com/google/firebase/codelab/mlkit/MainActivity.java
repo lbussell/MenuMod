@@ -32,6 +32,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -54,10 +55,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private static final String TAG = "MainActivity";
 
     private ImageView mImageView;
-    private Button mButton;
+    // private Button mButton;
     private Bitmap mSelectedImage;
     private GraphicOverlay mGraphicOverlay;
     private FloatingActionButton cameraButton;
+    private TextView defaultText;
 
     // Max width (portrait mode)
     private Integer mImageMaxWidth;
@@ -72,17 +74,17 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         setContentView(R.layout.activity_main);
 
         mImageView = findViewById(R.id.image_view);
-        mButton = findViewById(R.id.button_text);
+        defaultText = findViewById(R.id.textView);
         mGraphicOverlay = findViewById(R.id.graphic_overlay);
         cameraButton = findViewById(R.id.floatingActionButton);
 
         // Listens to Text Recognition button
-        mButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                runTextRecognition();
-            }
-        });
+//        mButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                runTextRecognition();
+//            }
+//        });
 
         cameraButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -91,12 +93,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             }
         });
 
-        Spinner dropdown = findViewById(R.id.spinner);
-        String[] items = new String[]{"Image 1", "Image 2", "Image 3"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout
-                .simple_spinner_dropdown_item, items);
-        dropdown.setAdapter(adapter);
-        dropdown.setOnItemSelectedListener(this);
+//        Spinner dropdown = findViewById(R.id.spinner);
+//        String[] items = new String[]{"Image 1", "Image 2", "Image 3"};
+//        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout
+//                .simple_spinner_dropdown_item, items);
+//        dropdown.setAdapter(adapter);
+//        dropdown.setOnItemSelectedListener(this);
     }
 
     private void dispatchTakePictureIntent() {
@@ -135,6 +137,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
             mImageView.setImageBitmap(resizedBitmap);
             mSelectedImage = resizedBitmap;
+            defaultText.setText("");
 
             runTextRecognition();
         }
@@ -144,13 +147,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         FirebaseVisionImage image = FirebaseVisionImage.fromBitmap(mSelectedImage);
         FirebaseVisionTextRecognizer detector = FirebaseVision.getInstance()
                 .getOnDeviceTextRecognizer();
-        mButton.setEnabled(false);
+//        mButton.setEnabled(false);
         detector.processImage(image)
                 .addOnSuccessListener(
                         new OnSuccessListener<FirebaseVisionText>() {
                             @Override
                             public void onSuccess(FirebaseVisionText texts) {
-                                mButton.setEnabled(true);
+//                                mButton.setEnabled(true);
                                 processTextRecognitionResult(texts);
                             }
                         })
@@ -159,7 +162,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                             @Override
                             public void onFailure(@NonNull Exception e) {
                                 // Task failed with an exception
-                                mButton.setEnabled(true);
+//                                mButton.setEnabled(true);
                                 e.printStackTrace();
                             }
                         });
