@@ -141,13 +141,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             defaultText.setText("");
 
             runTextRecognition();
-            alert();
         }
     }
 
-    private void alert() {
+    private void alert(String alertText) {
         AlertDialog.Builder builder1  = new AlertDialog.Builder(this);
-        builder1.setMessage("What's up fuckers");
+        builder1.setMessage(alertText);
 
         AlertDialog alert = builder1.create();
         alert.show();
@@ -180,6 +179,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private void processTextRecognitionResult(FirebaseVisionText texts) {
         List<FirebaseVisionText.TextBlock> blocks = texts.getTextBlocks();
+        String alertText = "";
         if (blocks.size() == 0) {
             showToast("No menu text found");
             return;
@@ -189,21 +189,51 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         for(FirebaseVisionText.TextBlock block : blocks) {
             for(FirebaseVisionText.Line line : block.getLines()) {
                 lines.add(line);
+//                alertText = line.getText() + "\n" + alertText;
             }
         }
         FirebaseVisionText.Line[] lineArr =
                 lines.toArray(new FirebaseVisionText.Line[lines.size()]);
         List<MenuItem> items = TextCleaning.itemsFromText(lineArr);
-        showToast(items.size() + "");
-        Random r = new Random();
-        int i = r.nextInt(items.size());
-        MenuItem chosen = items.get(i);
-        Graphic alphaGraphic = new AlphaGraphic(mGraphicOverlay, chosen.title, "#9000FF00");
-        mGraphicOverlay.add(alphaGraphic);
-        for(FirebaseVisionText.Line line : chosen.descriptions) {
-            alphaGraphic = new AlphaGraphic(mGraphicOverlay, line, "#90FF0000");
+        for(MenuItem chosen : items) {
+            Graphic alphaGraphic = new AlphaGraphic(mGraphicOverlay, chosen.title, "#9000FF00");
             mGraphicOverlay.add(alphaGraphic);
+            alertText = alertText + "\n" + chosen.title.getText();
+
+            if (new DietVector(chosen).hasNuts()) {
+                alertText = alertText + "\n" + "    May contain nuts.";
+            }
+            if (new DietVector(chosen).hasGluten()) {
+                alertText = alertText + "\n" + "    May contain gluten.";
+            }
+            if (new DietVector(chosen).isPescatarian()) {
+                alertText = alertText + "\n" + "    May be pescatarian-friendly.";
+            }
+            if (new DietVector(chosen).isVegetarian()) {
+                alertText = alertText + "\n" + "    May be vegetarian-friendly.";
+            }
+            if (new DietVector(chosen).isVegan()) {
+                alertText = alertText + "\n" + "    May be vegan-friendly.";
+            }
+
+            for(FirebaseVisionText.Line line : chosen.descriptions) {
+                alphaGraphic = new AlphaGraphic(mGraphicOverlay, line, "#90FF0000");
+                mGraphicOverlay.add(alphaGraphic);
+            }
         }
+
+        alert(alertText);
+//        List<MenuItem> items = TextCleaning.itemsFromText(lineArr);
+//        showToast(items.size() + "");
+//        Random r = new Random();
+//        int i = r.nextInt(items.size());
+//        MenuItem chosen = items.get(i);
+//        Graphic alphaGraphic = new AlphaGraphic(mGraphicOverlay, chosen.title, "#9000FF00");
+//        mGraphicOverlay.add(alphaGraphic);
+//        for(FirebaseVisionText.Line line : chosen.descriptions) {
+//            alphaGraphic = new AlphaGraphic(mGraphicOverlay, line, "#90FF0000");
+//            mGraphicOverlay.add(alphaGraphic);
+//        }
     }
 
     private void showToast(String message) {

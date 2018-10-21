@@ -128,7 +128,7 @@ public class TextCleaning {
 					/ ((double) sDistanceArr.length);
 			if(0 > unbalance)
 				unbalance *= -1;
-			double score = (1 * closeness) + (1 * unbalance);
+			double score = (1 * closeness) + (5 * unbalance);
 			if(score < lowestScore) {
 				lowestScore = score;
 				bestLocation = location;
